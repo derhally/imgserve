@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	EXE = "picserve"
+	EXE = "imgserve"
 )
 
 // Default target to run when none is specified
