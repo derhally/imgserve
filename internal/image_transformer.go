@@ -21,7 +21,9 @@ func NewImageTransfomer() *ImageTransformer {
 func (t *ImageTransformer) Transform(img image.Image, imageSettings ImageSettings) (image.Image, error) {
 	slog.Debug("settings", "width", imageSettings.Width, "height", imageSettings.Height, "grayscale", imageSettings.Grayscale, "blur", imageSettings.Blur, "resizeMode", imageSettings.ResizeMode)
 
-	if imageSettings.ResizeMode == "fill" {
+	if imageSettings.Height == 0 {
+		img = imaging.Resize(img, imageSettings.Width, imageSettings.Height, imaging.CatmullRom)
+	} else if imageSettings.ResizeMode == "fill" {
 		img = imaging.Fill(img, imageSettings.Width, imageSettings.Height, imaging.Center, imaging.CatmullRom)
 	} else if imageSettings.ResizeMode == "fit" {
 		img = imaging.Fit(img, imageSettings.Width, imageSettings.Height, imaging.CatmullRom)
