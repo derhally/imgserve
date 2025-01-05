@@ -44,26 +44,42 @@ func resolvePath(path string) (string, error) {
 	return imageDir, nil
 }
 
-func main() {
-	flag.Parse()
-
-	var err error
-	setLogLevel()
-
-	imageDir, err := resolvePath(settings.ImageDir)
+func checkFlags() (imageDir string, cacheDir string, err error) {
+	imageDir, err = resolvePath(settings.ImageDir)
 	if err != nil {
 		slog.Error("Failed to resolve image directory", "error", err)
-		os.Exit(1)
+		return "", "", err
 	}
 
-	cacheDir, err := resolvePath(settings.CacheDir)
-	if err != nil {
-		slog.Error("Failed to resolve cache directory", "error", err)
-		os.Exit(1)
+	if settings.CacheDir != "" {
+		cacheDir, err = resolvePath(settings.CacheDir)
+		if err != nil {
+			slog.Error("Failed to resolve cache directory", "error", err)
+			return "", "", err
+		}
+	} else {
+		slog.Info("Cache directory not set. Caching is DISABLED.")
+		cacheDir = ""
 	}
 
 	if imageDir == cacheDir {
 		slog.Error("Image directory and cache directory cannot be the same")
+		return "", "", fmt.Errorf("image directory and cache directory cannot be the same")
+	}
+
+	return imageDir, cacheDir, nil
+}
+
+func main() {
+	flag.Parse()
+
+	var err error
+	var imageCache internal.ImageStorageInterface
+
+	setLogLevel()
+
+	imageDir, cacheDir, err := checkFlags()
+	if err != nil {
 		os.Exit(1)
 	}
 
@@ -73,10 +89,15 @@ func main() {
 		log.Fatalf("Error creating image storage: %v", err)
 	}
 
-	imageCacheStorage, err := internal.NewImageStorage(internal.ImageStoreTypeLocal, imageTransformer, cacheDir)
-	imageCache, err := internal.NewImageCacheLocal(imageStorage, imageCacheStorage)
-	if err != nil {
-		log.Fatalf("Error creating image storage: %v", err)
+	if cacheDir != "" {
+		imageCacheStorage, err := internal.NewImageStorage(internal.ImageStoreTypeLocal, imageTransformer, cacheDir)
+		imageCache, err = internal.NewImageCacheLocal(imageStorage, imageCacheStorage)
+		if err != nil {
+			log.Fatalf("Error creating image storage: %v", err)
+		}
+	} else {
+		// Caching is disabled, so just use the image storage
+		imageCache = imageStorage
 	}
 
 	imagePicker := internal.NewRandomImagePicker(imageStorage)

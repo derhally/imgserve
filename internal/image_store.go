@@ -36,7 +36,10 @@ func NewImageStorage(storageType string, imageTransformer ImageTransformerInterf
 	}
 
 	if storageType == ImageStoreTypeLocal {
-		diskStore := &ImageStorageDisk{location: path}
+		diskStore := &ImageStorageDisk{
+			location:         path,
+			imageTransformer: imageTransformer,
+		}
 		err := diskStore.LoadImages()
 		return diskStore, err
 	}
