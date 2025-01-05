@@ -7,6 +7,10 @@ on:
     # run only against tags
     tags:
       - "v*"
+
+permissions:
+  contents: write
+
 jobs:
   release:
     runs-on: ubuntu-latest
