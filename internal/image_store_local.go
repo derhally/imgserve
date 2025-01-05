@@ -10,6 +10,7 @@ import (
 	"mime"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/hashicorp/go-set/v3"
 )
@@ -148,7 +149,11 @@ func (p *ImageStorageDisk) LoadImages() error {
 		}
 		_, filename := filepath.Split(path)
 		if !info.IsDir() {
-			p.images.Insert(filename)
+
+			fileExt := filepath.Ext(filename)
+			if supportedImageFile(fileExt) {
+				p.images.Insert(filename)
+			}
 		}
 		return nil
 	})
@@ -160,4 +165,14 @@ func (p *ImageStorageDisk) LoadImages() error {
 	slog.Info("Loaded images", "directory", p.location, "count", p.images.Size())
 
 	return err
+}
+
+func supportedImageFile(fileExt string) bool {
+	fileExt = strings.ToLower(fileExt)
+	switch fileExt {
+	case ".jpg", ".jpeg", ".png":
+		return true
+	default:
+		return false
+	}
 }
