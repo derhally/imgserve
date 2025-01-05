@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"image"
 	"image/jpeg"
 	"log/slog"
 	"strconv"
@@ -57,9 +56,16 @@ func (p *ImageHandler) HandleRequest(c fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).SendString("Invalid grayscale")
 	}
 
+	if grayscale == false {
+		grayscale, err = strconv.ParseBool(c.Query("greyscale", "false"))
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString("Invalid greyscale")
+		}
+	}
+
 	resizeMode := c.Query("resizemode", "fit")
 	if resizeMode != "none" && resizeMode != "fill" && resizeMode != "fit" {
-		return c.Status(fiber.StatusBadRequest).SendString("Invalid fit parameter. Must be none, fill, or fit")
+		return c.Status(fiber.StatusBadRequest).SendString("Invalid resizemode parameter. Must be none, fill, or fit")
 	}
 
 	imageSettings := ImageSettings{
@@ -70,24 +76,18 @@ func (p *ImageHandler) HandleRequest(c fiber.Ctx) error {
 		ResizeMode: resizeMode,
 	}
 
-	var img image.Image
-	img, err = p.resizeImage(imageKey, imageSettings)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).SendString("Failed to resize image")
-	}
-
-	c.Set(fiber.HeaderContentType, "image/jpeg")
-	jpeg.Encode(c, img, nil)
-	return c.SendStatus(fiber.StatusOK)
-}
-
-func (p *ImageHandler) resizeImage(key string, imageSettings ImageSettings) (img image.Image, err error) {
-
 	slog.Debug("settings", "width", imageSettings.Width,
 		"height", imageSettings.Height,
 		"grayscale", imageSettings.Grayscale,
 		"blur", imageSettings.Blur,
 		"resizeMode", imageSettings.ResizeMode)
 
-	return p.imageStorage.ImageWithTransform(key, imageSettings)
+	img, err := p.imageStorage.ImageWithTransform(imageKey, imageSettings)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).SendString("Failed to resize image")
+	}
+
+	c.Set(fiber.HeaderContentType, MIMEImageJpeg)
+	jpeg.Encode(c, img, nil)
+	return c.SendStatus(fiber.StatusOK)
 }
