@@ -40,3 +40,7 @@ go.work.sum
 photos/
 cache/
 bin/
+
+# Added by goreleaser init:
+dist/
+release/
