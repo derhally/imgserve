@@ -26,6 +26,22 @@ func NewImageHandler(settings ServiceSettings, imageStorage ImageStorageInterfac
 	}
 }
 
+// HandleRequest processes the incoming HTTP request, applies transformations to the image,
+// and serves the image. It supports parameters for width, height, blur, grayscale, and resize mode.
+//
+// Path Parameters:
+// - width: The width to resize the image to (required).
+// - height: The height to resize the image to (optional, default is 0).
+// Query Parameters:
+// - blur: The amount of blur to apply to the image (optional, default is 0).
+// - grayscale: Whether to convert the image to grayscale (optional, default is false).
+// - greyscale: Alias for grayscale (optional, default is false).
+// - resizemode: The mode to use for resizing the image (optional, default is "fit"). Valid values are "none", "fill", and "fit".
+//
+// Returns:
+// - 200 OK: If the image is successfully processed and served.
+// - 400 Bad Request: If any of the parameters are invalid.
+// - 500 Internal Server Error: If there is an error picking or processing the image.
 func (p *ImageHandler) HandleRequest(c fiber.Ctx) error {
 
 	// pick a random photo
