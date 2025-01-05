@@ -16,7 +16,7 @@ import (
 var settings internal.ServiceSettings
 
 func init() {
-	flag.StringVar(&settings.ImageDir, "imageDir", "./photos", "Directory where images are stored")
+	flag.StringVar(&settings.ImageDir, "imageDir", "./images", "Directory where images are stored")
 	flag.StringVar(&settings.CertFile, "certFile", "", "Path to the certificate file")
 	flag.StringVar(&settings.CertKeyFile, "certKeyFile", "", "Path to the certificate key file")
 	flag.StringVar(&settings.LogLevel, "logLevel", "INFO", "Path to the certificate key file")
@@ -59,6 +59,11 @@ func main() {
 	cacheDir, err := resolvePath(settings.CacheDir)
 	if err != nil {
 		slog.Error("Failed to resolve cache directory", "error", err)
+		os.Exit(1)
+	}
+
+	if imageDir == cacheDir {
+		slog.Error("Image directory and cache directory cannot be the same")
 		os.Exit(1)
 	}
 

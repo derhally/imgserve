@@ -38,6 +38,7 @@ go.work.sum
 *.temp
 
 photos/
+images/
 cache/
 bin/
 
