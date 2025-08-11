@@ -3,7 +3,7 @@ module picserve
 go 1.24.0
 
 require (
-	github.com/hashicorp/go-set/v3 v3.0.0
+	github.com/hashicorp/go-set/v3 v3.0.1
 	github.com/magefile/mage v1.15.0
 )
 
