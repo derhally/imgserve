@@ -25,13 +25,15 @@ jobs:
         with:
           go-version: stable
 
-      # On tags we cut a real release; on pull requests GoReleaser has no tag to
-      # release, so we only validate the config with a snapshot build.
+      # On tags we cut a real release. On pull requests there is no tag to
+      # release, so we run the same pipeline in snapshot mode: it needs no tag
+      # and publishes nothing, but unlike `build` it does exercise the archives
+      # stage, so config errors there are caught before a tag is pushed.
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v7
         with:
           distribution: goreleaser
           version: "~> v2"
-          args: ${{ startsWith(github.ref, 'refs/tags/') && 'release --clean' || 'build --snapshot --clean' }}
+          args: ${{ startsWith(github.ref, 'refs/tags/') && 'release --clean' || 'release --snapshot --clean' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
