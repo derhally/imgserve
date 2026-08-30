@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/derhally/imgserve/compare/v0.2.1...v0.2.2) (2026-08-30)
+
+
+### Miscellaneous Chores
+
+* release 0.2.2 ([99978aa](https://github.com/derhally/imgserve/commit/99978aa14a4d92adee887f0db73f1b39cfde308b))
+
 ## 0.1.0 (2025-01-05)
 
 
