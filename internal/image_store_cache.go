@@ -43,7 +43,7 @@ func (c *ImageStoreCacheLocal) ClearCache() error {
 }
 
 func (c *ImageStoreCacheLocal) Clear() error {
-	err := c.Clear()
+	err := c.ClearCache()
 	if err != nil {
 		return err
 	}
@@ -85,9 +85,16 @@ func (c *ImageStoreCacheLocal) ImageWithTransform(key string, imageSettings Imag
 		return c.cacheStore.Image(hashedName)
 	}
 
-	img, err := c.imageStore.Image(key)
-	c.cacheStore.Add(hashedName, targetMimeType, img)
-	return img, err
+	img, err := c.imageStore.ImageWithTransform(key, imageSettings)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := c.cacheStore.Add(hashedName, targetMimeType, img); err != nil {
+		// A failed cache write shouldn't fail the request.
+		slog.Warn("Failed to cache image", "key", key, "err", err)
+	}
+	return img, nil
 }
 
 func hashString(str string) string {

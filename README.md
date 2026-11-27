@@ -56,6 +56,13 @@ The following request gets an image that is resized to a certain width and prese
 http://<address>:<port>/{width}
 ```
 
+When serving several directories, put the directory's path name first (see [Images](#images)):
+
+```
+http://<address>:<port>/{name}/{width}
+http://<address>:<port>/{name}/{width}/{height}
+```
+
 
 The following gets an image that is resized to fit into a specific width and heigh
 
@@ -84,11 +91,49 @@ http://<address>:<port>/{width}/{height}?blur=1.5
 
 ## Configuration
 
+### Config file
+
+Instead of flags, settings can live in a YAML file passed with `-config`:
+
+```sh
+$ imgserve -config /etc/imgserve/imgserve.yaml
+```
+
+```yaml
+port: 8080
+logLevel: INFO
+cacheDir: /var/cache/imgserve
+directories:
+  - path: /mnt/media/photos          # served at /photos
+  - path: /mnt/images/screensaver
+    name: ss                         # served at /ss
+```
+
+See [imgserve.example.yaml](./imgserve.example.yaml) for every option. Unknown keys are rejected.
+Relative paths are resolved against the config file's directory.
+Flags given on the command line override the file, and `-imageDir` flags replace its `directories`.
+
 ### Images
 
 Use the `-imageDir` flag to specify the directory where to load the images from.
 
-Currently images are only loaded from the root directory.  Loading images from subdirectories is not supported.
+Repeat `-imageDir` to serve several directories. Each directory gets its own URL path:
+
+* `-imageDir /mnt/media/photos` is served at `/photos/{width}` and `/photos/{width}/{height}` (the directory's base name).
+* `-imageDir screensaver=/mnt/images/ss` is served at `/screensaver/{width}` and `/screensaver/{width}/{height}` (the name before `=`).
+
+```sh
+$ imgserve -imageDir /mnt/media/photos -imageDir screensaver=/mnt/images/ss
+```
+
+Path names may contain letters, digits, `.`, `_` and `-`, must not be only digits, and must be unique (ignoring case).
+Name a directory explicitly when two directories share a base name.
+
+The first `-imageDir` is also served at `/{width}` and `/{width}/{height}`, so existing URLs keep working.
+
+If no `-imageDir` is given, `./images` is used.
+
+Currently images are only loaded from the root of each directory.  Loading images from subdirectories is not supported.
 
 ### Caching
 
@@ -96,7 +141,8 @@ To avoid repeating the same transformation, ImgServe will save the tranformed im
 
 Currently the only supported caching mechanism is local storage. 
 
-Use the `-cacheDir` flag to specify a location to save these images.
+Use the `-cacheDir` flag to specify a location to save these images. Each image directory is cached in its own
+subdirectory of `-cacheDir`, named after its URL path name.
 
 The service will hash the values of the requested transformation settings and use the has as a filename for future lookups.  The properties used are
 
