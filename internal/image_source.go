@@ -11,6 +11,9 @@ import (
 type ImageSource struct {
 	Name string // URL path segment, e.g. "screensaver" for /screensaver/{width}
 	Dir  string // Absolute path to the directory holding the images
+
+	// Default marks the directory that also answers /{width} and /{width}/{height}.
+	Default bool
 }
 
 var validSourceName = regexp.MustCompile(`^[A-Za-z0-9._-]+$`)
@@ -80,19 +83,39 @@ func validateSourceName(name string) error {
 	return nil
 }
 
-// ValidateImageSources checks that every source has a unique name.
+// ValidateImageSources checks that every source has a unique name and that at
+// most one is marked as the default.
 // Names are compared case-insensitively so /Photos and /photos can't both exist.
 func ValidateImageSources(sources []ImageSource) error {
 	if len(sources) == 0 {
 		return fmt.Errorf("at least one image directory is required")
 	}
 	seen := make(map[string]string, len(sources))
+	defaultName := ""
 	for _, s := range sources {
 		key := strings.ToLower(s.Name)
 		if other, ok := seen[key]; ok {
 			return fmt.Errorf("path name %q is used by both %q and %q; give one a name with name=directory", s.Name, other, s.Dir)
 		}
 		seen[key] = s.Dir
+
+		if s.Default {
+			if defaultName != "" {
+				return fmt.Errorf("only one directory can be the default, but both %q and %q are", defaultName, s.Name)
+			}
+			defaultName = s.Name
+		}
 	}
 	return nil
+}
+
+// DefaultSourceIndex returns the index of the source that serves /{width}:
+// the one marked Default, or the first one when none is marked.
+func DefaultSourceIndex(sources []ImageSource) int {
+	for i, s := range sources {
+		if s.Default {
+			return i
+		}
+	}
+	return 0
 }

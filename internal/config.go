@@ -25,6 +25,10 @@ type Config struct {
 type DirectoryConfig struct {
 	Path string `yaml:"path"` // directory holding the images
 	Name string `yaml:"name"` // URL path name; defaults to the directory's base name
+
+	// Default makes this directory also answer /{width} and /{width}/{height}.
+	// When no directory sets it, the first one does.
+	Default bool `yaml:"default"`
 }
 
 // LoadConfig reads a YAML config file. Unknown keys are rejected so typos
@@ -77,6 +81,7 @@ func (c Config) ImageSources() ([]ImageSource, error) {
 		if err != nil {
 			return nil, err
 		}
+		source.Default = d.Default
 		sources = append(sources, source)
 	}
 	return sources, nil

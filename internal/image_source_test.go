@@ -76,4 +76,21 @@ func TestValidateImageSources(t *testing.T) {
 	if err := ValidateImageSources(dup); err == nil {
 		t.Error("expected error for duplicate names")
 	}
+
+	twoDefaults := []ImageSource{{Name: "a", Dir: "/a", Default: true}, {Name: "b", Dir: "/b", Default: true}}
+	if err := ValidateImageSources(twoDefaults); err == nil {
+		t.Error("expected error for two defaults")
+	}
+}
+
+func TestDefaultSourceIndex(t *testing.T) {
+	none := []ImageSource{{Name: "a"}, {Name: "b"}}
+	if got := DefaultSourceIndex(none); got != 0 {
+		t.Errorf("no default marked: got %d, want 0", got)
+	}
+
+	second := []ImageSource{{Name: "a"}, {Name: "b", Default: true}, {Name: "c"}}
+	if got := DefaultSourceIndex(second); got != 1 {
+		t.Errorf("second marked: got %d, want 1", got)
+	}
 }

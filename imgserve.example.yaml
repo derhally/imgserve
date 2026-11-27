@@ -13,9 +13,11 @@ logLevel: INFO
 # certKeyFile: /etc/imgserve/my.images.net.key
 
 # Each directory is served at /{name}/{width} and /{name}/{width}/{height}.
-# name defaults to the directory's base name. The first directory is also
-# served at /{width} and /{width}/{height}.
+# name defaults to the directory's base name.
+# The directory with default: true is also served at /{width} and
+# /{width}/{height}. If none sets it, the first directory is the default.
 directories:
   - path: /mnt/media/photos          # served at /photos
+    default: true                    # ...and at /
   - path: /mnt/images/screensaver
     name: ss                         # served at /ss

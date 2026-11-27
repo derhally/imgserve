@@ -105,6 +105,7 @@ logLevel: INFO
 cacheDir: /var/cache/imgserve
 directories:
   - path: /mnt/media/photos          # served at /photos
+    default: true                    # ...and at /{width}[/{height}]
   - path: /mnt/images/screensaver
     name: ss                         # served at /ss
 ```
@@ -129,7 +130,9 @@ $ imgserve -imageDir /mnt/media/photos -imageDir screensaver=/mnt/images/ss
 Path names may contain letters, digits, `.`, `_` and `-`, must not be only digits, and must be unique (ignoring case).
 Name a directory explicitly when two directories share a base name.
 
-The first `-imageDir` is also served at `/{width}` and `/{width}/{height}`, so existing URLs keep working.
+One directory, the default, is also served at `/{width}` and `/{width}/{height}`, so existing URLs keep working.
+Pick it with `default: true` on a directory in the config file, or with `-default <name>` on the command line
+(which wins over the file). At most one directory can be the default. If none is picked, the first directory is the default.
 
 If no `-imageDir` is given, `./images` is used.
 

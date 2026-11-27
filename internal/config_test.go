@@ -54,6 +54,29 @@ directories:
 	}
 }
 
+func TestLoadConfigDefault(t *testing.T) {
+	cfg, err := LoadConfig(writeConfig(t, `
+directories:
+  - path: /mnt/media/photos
+  - path: /mnt/ss
+    name: adly
+    default: true
+`))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	sources, err := cfg.ImageSources()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if sources[0].Default || !sources[1].Default {
+		t.Errorf("default flags = %v, %v; want false, true", sources[0].Default, sources[1].Default)
+	}
+	if got := DefaultSourceIndex(sources); got != 1 {
+		t.Errorf("DefaultSourceIndex = %d, want 1", got)
+	}
+}
+
 func TestLoadConfigNumericPort(t *testing.T) {
 	cfg, err := LoadConfig(writeConfig(t, "port: 8080\n"))
 	if err != nil {

@@ -30,14 +30,16 @@ func (s *stringList) Set(value string) error {
 
 var imageDirs stringList
 var configFile string
+var defaultDirName string
 
 func init() {
 	flag.StringVar(&configFile, "config", "", "Path to a YAML config file. Flags given on the command line override its values, "+
 		"and any -imageDir flags replace its directories")
 	flag.Var(&imageDirs, "imageDir", "Directory to serve images from, as `dir` or name=dir. "+
 		"Repeat to serve several directories; each is served at /{name}/{width}[/{height}], "+
-		"where name defaults to the directory's base name. The first one is also served at /{width}[/{height}]. "+
-		"Defaults to "+defaultImageDir)
+		"where name defaults to the directory's base name. Defaults to "+defaultImageDir)
+	flag.StringVar(&defaultDirName, "default", "", "Path name of the directory that also answers /{width}[/{height}]. "+
+		"Overrides default: in the config file. When nothing sets it, the first directory is the default")
 	flag.StringVar(&settings.CertFile, "certFile", "", "Path to the certificate file")
 	flag.StringVar(&settings.CertKeyFile, "certKeyFile", "", "Path to the certificate key file")
 	flag.StringVar(&settings.LogLevel, "logLevel", "INFO", "Log level: DEBUG, INFO, WARN or ERROR")
@@ -96,6 +98,18 @@ func checkFlags(configSources []internal.ImageSource) (sources []internal.ImageS
 			return nil, "", err
 		}
 		sources = []internal.ImageSource{source}
+	}
+
+	if defaultDirName != "" {
+		found := false
+		for i := range sources {
+			sources[i].Default = strings.EqualFold(sources[i].Name, defaultDirName)
+			found = found || sources[i].Default
+		}
+		if !found {
+			slog.Error("The -default directory is not being served", "default", defaultDirName)
+			return nil, "", fmt.Errorf("no directory has the path name %q", defaultDirName)
+		}
 	}
 
 	if err := internal.ValidateImageSources(sources); err != nil {
@@ -185,6 +199,7 @@ func main() {
 	app := fiber.New()
 	app.Use(recover.New())
 
+	defaultIndex := internal.DefaultSourceIndex(sources)
 	for i, source := range sources {
 		handler, count, err := newSourceHandler(source, cacheDir, imageTransformer)
 		if err != nil {
@@ -197,8 +212,8 @@ func main() {
 		slog.Info("Serving image directory", "path", prefix, "directory", source.Dir, "images", count)
 
 		// Keep the original /{width} and /{width}/{height} URLs working by
-		// pointing them at the first directory.
-		if i == 0 {
+		// pointing them at the default directory.
+		if i == defaultIndex {
 			app.Get("/:width<int>", handler.HandleRequest)
 			app.Get("/:width<int>/:height<int>", handler.HandleRequest)
 			slog.Info("Serving default image directory", "path", "/", "directory", source.Dir)
